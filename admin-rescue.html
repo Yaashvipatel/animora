@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Rescue</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-rescue.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="page-top">
+      <h2>🛠 Admin - Rescue Requests</h2>
+      <p>View and update rescue request statuses</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html">Adoption</a>
+      <a href="admin-rescue.html" class="active">Rescue</a>
+      <a href="admin-doctor.html">Doctors</a>
+      <a href="admin-products.html">Products</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-appointments.html">Appointments</a>
+    </nav>
+    
+
+    <section class="card" id="adminRescueBox">
+      <p class="muted">Loading rescue requests...</p>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navbar -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+    const adminRescueBox = document.getElementById("adminRescueBox");
+
+    function getStatusClass(status) {
+      if (!status) return "pending";
+      const s = status.toLowerCase();
+      if (s.includes("rescued")) return "good";
+      if (s.includes("progress")) return "mid";
+      return "pending";
+    }
+
+    async function loadAllRescues() {
+      try {
+        const res = await adminFetch(API + "/api/rescue/all");
+        const rescues = await res.json();
+
+        if (!res.ok) {
+          adminRescueBox.innerHTML = "<p class='muted'>Failed to load rescue requests ❌</p>";
+          return;
+        }
+
+        if (!rescues || rescues.length === 0) {
+          adminRescueBox.innerHTML = `
+            <h3 class="sec-title">No rescue requests</h3>
+            <p class="muted">Everything looks safe for now ✅</p>
+          `;
+          return;
+        }
+
+        adminRescueBox.innerHTML = `<h3 class="sec-title">All Rescue Requests</h3>`;
+
+        rescues.forEach(function (r) {
+          const div = document.createElement("div");
+          div.className = "req-card";
+
+          div.innerHTML = `
+            <div class="req-top">
+              <div>
+                <h4>${r.animalType} • ${r.condition}</h4>
+                <p class="muted small">📍 ${r.city}, ${r.address}</p>
+              </div>
+
+              <span class="status ${getStatusClass(r.status)}">${r.status}</span>
+            </div>
+
+            ${r.image ? `
+              <div class="req-img">
+                <img src="${r.image}" alt="Rescue Image" />
+              </div>
+            ` : ""}
+
+            ${r.message ? `<p class="msg">📝 ${r.message}</p>` : ""}
+
+            ${r.mapsLink ? `
+              <a class="btn ghost full" href="${r.mapsLink}" target="_blank">
+                📍 Open in Google Maps
+              </a>
+            ` : ""}
+
+            <div class="action-row">
+              <select class="status-select" id="status-${r._id}">
+                <option value="Pending" ${r.status === "Pending" ? "selected" : ""}>Pending</option>
+                <option value="In Progress" ${r.status === "In Progress" ? "selected" : ""}>In Progress</option>
+                <option value="Rescued" ${r.status === "Rescued" ? "selected" : ""}>Rescued</option>
+              </select>
+
+              <button class="btn primary" onclick="updateStatus('${r._id}')">
+                Update ✅
+              </button>
+            </div>
+          `;
+
+          adminRescueBox.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        adminRescueBox.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    window.updateStatus = async function (id) {
+      const status = document.getElementById("status-" + id).value;
+
+      try {
+        const res = await adminFetch(API + "/api/rescue/status/" + id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Update failed ❌");
+          return;
+        }
+
+        alert("Status updated ✅");
+        loadAllRescues();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    loadAllRescues();
+  </script>
+
+</body>
+</html>

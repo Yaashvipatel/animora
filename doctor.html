@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Doctor</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="doctor.css" />
+</head>
+
+<body>
+
+  <div class="doc-container">
+    <h2>🩺 Doctor Portal</h2>
+    <p>Choose how you want to consult a vet.</p>
+
+    <div class="doc-options">
+
+      <!-- Online Appointment -->
+      <a href="online-appointment.html" class="doc-card">
+        <div class="doc-icon">📅</div>
+        <div>
+          <h3>Online Appointment</h3>
+          <p>Book an online vet consultation</p>
+        </div>
+      </a>
+
+      <!-- Nearby Doctors -->
+      <div class="doc-card" onclick="openNearbyVets()">
+        <div class="doc-icon">📍</div>
+        <div>
+          <h3>Nearby Vets</h3>
+          <p>Find vet hospitals around your location</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Location Search Box -->
+    <div class="location-box">
+      <h3>Search by City / Area</h3>
+      <input type="text" id="locationInput" placeholder="e.g. Ahmedabad, Mumbai, Surat..." />
+      <button onclick="searchVetsByLocation()">Search on Maps</button>
+    </div>
+
+    <!-- Use Current Location -->
+    <button class="gps-btn" onclick="useCurrentLocation()">
+      📡 Use My Current Location
+    </button>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item">
+      <span class="icon">☰</span>
+      <span>Menu</span>
+    </a>
+
+    <a href="index.html" class="nav-item">
+      <span class="icon">🏠</span>
+      <span>Home</span>
+    </a>
+
+    <a href="doctor.html" class="nav-item active">
+      <span class="icon">🩺</span>
+      <span>Doctor</span>
+    </a>
+
+    <a href="shopping.html" class="nav-item">
+      <span class="icon">🛒</span>
+      <span>Shopping</span>
+    </a>
+
+    <a href="profile.html" class="nav-item">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script>
+    function openNearbyVets() {
+      // Default search
+      window.open("https://www.google.com/maps/search/vet+hospital+near+me", "_blank");
+    }
+
+    function searchVetsByLocation() {
+      const loc = document.getElementById("locationInput").value.trim();
+
+      if (!loc) {
+        alert("Please enter a location first ❗");
+        return;
+      }
+
+      const url = "https://www.google.com/maps/search/vet+hospital+in+" + encodeURIComponent(loc);
+      window.open(url, "_blank");
+    }
+
+    function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser ❌");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          const url =
+            "https://www.google.com/maps/search/vet+hospital/@"
+            + lat + "," + lng + ",14z";
+
+          window.open(url, "_blank");
+        },
+        function () {
+          alert("Location access denied ❌ Please allow location permission.");
+        }
+      );
+    }
+  </script>
+
+</body>
+</html>

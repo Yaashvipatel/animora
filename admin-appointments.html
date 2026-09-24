@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Appointments</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="page-top">
+      <h2>🩺 Admin - Appointments</h2>
+      <p>View and update vet appointment statuses</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html">Adoption</a>
+      <a href="admin-rescue.html">Rescue</a>
+      <a href="admin-doctor.html">Doctors</a>
+      <a href="admin-products.html">Products</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-appointments.html" class="active">Appointments</a>
+    </nav>
+    
+
+    <section class="card" style="margin-bottom:0;">
+      <label class="muted small" for="statusFilter">Filter by status</label>
+      <select class="status-select" id="statusFilter" style="margin-top:6px;">
+        <option value="">All</option>
+        <option value="Booked">Booked</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Completed">Completed</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </section>
+
+    <section class="card" id="adminApptBox">
+      <p class="muted">Loading appointments...</p>
+    </section>
+
+    <div class="action-row" id="pager" style="justify-content:center; display:none;">
+      <button class="btn ghost" id="prevBtn">← Prev</button>
+      <span class="muted" id="pageInfo" style="align-self:center;"></span>
+      <button class="btn ghost" id="nextBtn">Next →</button>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navbar -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+    const adminApptBox = document.getElementById("adminApptBox");
+    const statusFilter = document.getElementById("statusFilter");
+    const pager = document.getElementById("pager");
+    const pageInfo = document.getElementById("pageInfo");
+    let currentPage = 1;
+
+    function getStatusClass(status) {
+      if (!status) return "pending";
+      const s = status.toLowerCase();
+      if (s === "completed") return "good";
+      if (s === "cancelled") return "pending";
+      return "mid";
+    }
+
+    async function loadAppointments(page) {
+      currentPage = page || 1;
+      adminApptBox.innerHTML = "<p class='muted'>Loading appointments...</p>";
+
+      try {
+        let url = API + "/api/appointments/all?page=" + currentPage + "&limit=10";
+        if (statusFilter.value) url += "&status=" + encodeURIComponent(statusFilter.value);
+
+        const res = await adminFetch(url);
+        const data = await res.json();
+
+        if (!res.ok) {
+          adminApptBox.innerHTML = "<p class='muted'>Failed to load appointments ❌</p>";
+          pager.style.display = "none";
+          return;
+        }
+
+        const appointments = data.appointments || [];
+
+        if (appointments.length === 0) {
+          adminApptBox.innerHTML = `
+            <h3 class="sec-title">No appointments</h3>
+            <p class="muted">Nothing to show for this filter.</p>
+          `;
+          pager.style.display = "none";
+          return;
+        }
+
+        adminApptBox.innerHTML = `<h3 class="sec-title">Appointments (${data.totalResults})</h3>`;
+
+        appointments.forEach(function (a) {
+          const div = document.createElement("div");
+          div.className = "req-card";
+
+          const patient = a.userId ? (a.userId.name + " • " + a.userId.phone) : "Unknown user";
+          const doc = a.doctorId ? (a.doctorId.name + " (" + a.doctorId.specialization + ")") : "Unassigned";
+
+          div.innerHTML = `
+            <div class="req-top">
+              <div>
+                <h4>${a.petName} — ${a.issue}</h4>
+                <p class="muted small">👤 ${patient}</p>
+                <p class="muted small">🩺 ${doc}</p>
+                <p class="muted small">📅 ${a.appointmentDate} at ${a.appointmentTime} • ${a.mode}</p>
+              </div>
+
+              <span class="status ${getStatusClass(a.status)}">${a.status}</span>
+            </div>
+
+            <div class="action-row">
+              <select class="status-select" id="status-${a._id}">
+                <option value="Booked" ${a.status === "Booked" ? "selected" : ""}>Booked</option>
+                <option value="Confirmed" ${a.status === "Confirmed" ? "selected" : ""}>Confirmed</option>
+                <option value="Completed" ${a.status === "Completed" ? "selected" : ""}>Completed</option>
+                <option value="Cancelled" ${a.status === "Cancelled" ? "selected" : ""}>Cancelled</option>
+              </select>
+
+              <button class="btn primary" onclick="updateApptStatus('${a._id}')">Update ✅</button>
+            </div>
+          `;
+
+          adminApptBox.appendChild(div);
+        });
+
+        pager.style.display = data.totalPages > 1 ? "flex" : "none";
+        pageInfo.innerText = "Page " + data.page + " of " + data.totalPages;
+        document.getElementById("prevBtn").disabled = data.page <= 1;
+        document.getElementById("nextBtn").disabled = data.page >= data.totalPages;
+
+      } catch (error) {
+        console.log(error);
+        adminApptBox.innerHTML = "<p class='muted'>Server error ❌</p>";
+        pager.style.display = "none";
+      }
+    }
+
+    window.updateApptStatus = async function (id) {
+      const status = document.getElementById("status-" + id).value;
+
+      try {
+        const res = await adminFetch(API + "/api/appointments/" + id + "/status", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Update failed ❌");
+          return;
+        }
+
+        alert("Appointment updated ✅");
+        loadAppointments(currentPage);
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    statusFilter.addEventListener("change", function () { loadAppointments(1); });
+    document.getElementById("prevBtn").addEventListener("click", function () { loadAppointments(currentPage - 1); });
+    document.getElementById("nextBtn").addEventListener("click", function () { loadAppointments(currentPage + 1); });
+
+    loadAppointments(1);
+  </script>
+
+</body>
+</html>

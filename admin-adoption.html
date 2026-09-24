@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Adoption</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-adoption.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="admin-page">
+
+    <header class="page-top">
+      <h2>🛠 Admin - Manage Adoption Pets</h2>
+      <p>Add / Update / Delete pets for adoption</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html" class="active">Adoption</a>
+      <a href="admin-rescue.html">Rescue</a>
+      <a href="admin-doctor.html">Doctors</a>
+      <a href="admin-products.html">Products</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-appointments.html">Appointments</a>
+    </nav>
+    
+
+    <section class="card">
+      <h3 class="sec-title" id="formTitle">➕ Add Pet</h3>
+
+      <form id="petForm" class="form">
+
+        <div class="two-col">
+          <div class="field">
+            <label>Pet Name *</label>
+            <input id="name" required placeholder="e.g. Bruno" />
+          </div>
+
+          <div class="field">
+            <label>Type *</label>
+            <input id="type" required placeholder="Dog / Cat" />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Age *</label>
+            <input id="age" required placeholder="e.g. 2 years" />
+          </div>
+
+          <div class="field">
+            <label>Gender *</label>
+            <input id="gender" required placeholder="Male / Female" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Nature</label>
+          <input id="nature" placeholder="Friendly / Calm..." />
+        </div>
+
+        <div class="two-col">
+          <div class="field check-row">
+            <input type="checkbox" id="vaccinated" />
+            <label for="vaccinated">Vaccinated ✅</label>
+          </div>
+
+          <div class="field check-row">
+            <input type="checkbox" id="neutered" />
+            <label for="neutered">Neutered ✅</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Image URL</label>
+          <input id="image" placeholder="https://..." />
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <input id="description" placeholder="Short info about pet..." />
+        </div>
+
+        <div class="field">
+          <label>Centre Name *</label>
+          <input id="centreName" required placeholder="e.g. Happy Paws Shelter" />
+        </div>
+
+        <div class="field">
+          <label>Centre Address *</label>
+          <input id="centreAddress" required placeholder="Full address..." />
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>City *</label>
+            <input id="city" required placeholder="City" />
+          </div>
+
+          <div class="field">
+            <label>Contact Phone *</label>
+            <input id="contactPhone" required placeholder="e.g. 9876543210" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Adoption Fee (₹)</label>
+          <input id="adoptionFee" type="number" placeholder="0" />
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary full" type="submit" id="submitBtn">Add Pet ✅</button>
+          <button class="btn ghost full" type="button" id="cancelBtn" style="display:none;">Cancel Edit</button>
+        </div>
+
+      </form>
+    </section>
+
+    <section class="card">
+      <h3 class="sec-title">🐾 Pets Added</h3>
+      <div id="petList"><p class="muted">Loading pets...</p></div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+
+    const petForm = document.getElementById("petForm");
+    const petList = document.getElementById("petList");
+
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    let editPetId = null;
+
+    function resetMode() {
+      editPetId = null;
+      petForm.reset();
+      formTitle.innerText = "➕ Add Pet";
+      submitBtn.innerText = "Add Pet ✅";
+      cancelBtn.style.display = "none";
+    }
+
+    function fillForm(p) {
+      document.getElementById("name").value = p.name || "";
+      document.getElementById("type").value = p.type || "";
+      document.getElementById("age").value = p.age || "";
+      document.getElementById("gender").value = p.gender || "";
+      document.getElementById("nature").value = p.nature || "";
+      document.getElementById("vaccinated").checked = p.vaccinated || false;
+      document.getElementById("neutered").checked = p.neutered || false;
+      document.getElementById("image").value = p.image || "";
+      document.getElementById("description").value = p.description || "";
+      document.getElementById("centreName").value = p.centreName || "";
+      document.getElementById("centreAddress").value = p.centreAddress || "";
+      document.getElementById("city").value = p.city || "";
+      document.getElementById("contactPhone").value = p.contactPhone || "";
+      document.getElementById("adoptionFee").value = p.adoptionFee || 0;
+    }
+
+    async function loadPets() {
+      try {
+        const res = await fetch(API + "/api/adoption/pets?limit=50");
+        const data = await res.json();
+
+        if (!res.ok) {
+          petList.innerHTML = "<p class='muted'>Failed to load pets ❌</p>";
+          return;
+        }
+
+        const pets = data.pets || [];
+
+        if (!pets || pets.length === 0) {
+          petList.innerHTML = "<p class='muted'>No pets added yet.</p>";
+          return;
+        }
+
+        petList.innerHTML = "";
+
+        pets.forEach(function (p) {
+          const div = document.createElement("div");
+          div.className = "pet-row";
+
+          div.innerHTML = `
+            <div class="row-top">
+              <div class="left">
+                <div class="thumb">
+                  ${p.image ? `<img src="${p.image}" />` : "🐾"}
+                </div>
+
+                <div>
+                  <h4>${p.name}</h4>
+                  <p class="muted">${p.type} • ${p.age} • ${p.gender}</p>
+                  <p class="muted small">📍 ${p.centreName}, ${p.city}</p>
+                </div>
+              </div>
+
+              <div class="action-col">
+                <button class="btn tiny ghost" onclick='startEdit(${JSON.stringify(p)})'>Edit</button>
+                <button class="btn tiny danger" onclick="deletePet('${p._id}')">Delete</button>
+              </div>
+            </div>
+          `;
+
+          petList.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        petList.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    window.startEdit = function (p) {
+      editPetId = p._id;
+      fillForm(p);
+
+      formTitle.innerText = "✏️ Edit Pet";
+      submitBtn.innerText = "Save Changes ✅";
+      cancelBtn.style.display = "inline-flex";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.deletePet = async function (id) {
+      const ok = confirm("Delete this pet? ❗");
+      if (!ok) return;
+
+      try {
+        const res = await adminFetch(API + "/api/adoption/pets/" + id, { method: "DELETE" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Delete failed ❌");
+          return;
+        }
+
+        alert("Pet deleted ✅");
+        resetMode();
+        loadPets();
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    cancelBtn.addEventListener("click", function () {
+      resetMode();
+    });
+
+    petForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        type: document.getElementById("type").value.trim(),
+        age: document.getElementById("age").value.trim(),
+        gender: document.getElementById("gender").value.trim(),
+        nature: document.getElementById("nature").value.trim(),
+        vaccinated: document.getElementById("vaccinated").checked,
+        neutered: document.getElementById("neutered").checked,
+        image: document.getElementById("image").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        centreName: document.getElementById("centreName").value.trim(),
+        centreAddress: document.getElementById("centreAddress").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        contactPhone: document.getElementById("contactPhone").value.trim(),
+        adoptionFee: document.getElementById("adoptionFee").value || 0
+      };
+
+      try {
+        let url = API + "/api/adoption/pets/add";
+        let method = "POST";
+
+        if (editPetId) {
+          url = API + "/api/adoption/pets/" + editPetId;
+          method = "PUT";
+        }
+
+        const res = await adminFetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Action failed ❌");
+          return;
+        }
+
+        alert(editPetId ? "Pet updated ✅" : "Pet added ✅");
+        resetMode();
+        loadPets();
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    loadPets();
+  </script>
+
+</body>
+</html>

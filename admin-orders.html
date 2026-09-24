@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Orders</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="page-top">
+      <h2>📦 Admin - Orders</h2>
+      <p>View and update customer order statuses</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html">Adoption</a>
+      <a href="admin-rescue.html">Rescue</a>
+      <a href="admin-doctor.html">Doctors</a>
+      <a href="admin-products.html">Products</a>
+      <a href="admin-orders.html" class="active">Orders</a>
+      <a href="admin-appointments.html">Appointments</a>
+    </nav>
+    
+
+    <section class="card" style="margin-bottom:0;">
+      <label class="muted small" for="statusFilter">Filter by status</label>
+      <select class="status-select" id="statusFilter" style="margin-top:6px;">
+        <option value="">All</option>
+        <option value="Placed">Placed</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </section>
+
+    <section class="card" id="adminOrdersBox">
+      <p class="muted">Loading orders...</p>
+    </section>
+
+    <div class="action-row" id="pager" style="justify-content:center; display:none;">
+      <button class="btn ghost" id="prevBtn">← Prev</button>
+      <span class="muted" id="pageInfo" style="align-self:center;"></span>
+      <button class="btn ghost" id="nextBtn">Next →</button>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navbar -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+    const adminOrdersBox = document.getElementById("adminOrdersBox");
+    const statusFilter = document.getElementById("statusFilter");
+    const pager = document.getElementById("pager");
+    const pageInfo = document.getElementById("pageInfo");
+    let currentPage = 1;
+
+    function getStatusClass(status) {
+      if (!status) return "pending";
+      const s = status.toLowerCase();
+      if (s === "delivered") return "good";
+      if (s === "cancelled") return "pending";
+      return "mid";
+    }
+
+    async function loadOrders(page) {
+      currentPage = page || 1;
+      adminOrdersBox.innerHTML = "<p class='muted'>Loading orders...</p>";
+
+      try {
+        let url = API + "/api/orders/all?page=" + currentPage + "&limit=10";
+        if (statusFilter.value) url += "&status=" + encodeURIComponent(statusFilter.value);
+
+        const res = await adminFetch(url);
+        const data = await res.json();
+
+        if (!res.ok) {
+          adminOrdersBox.innerHTML = "<p class='muted'>Failed to load orders ❌</p>";
+          pager.style.display = "none";
+          return;
+        }
+
+        const orders = data.orders || [];
+
+        if (orders.length === 0) {
+          adminOrdersBox.innerHTML = `
+            <h3 class="sec-title">No orders</h3>
+            <p class="muted">Nothing to show for this filter.</p>
+          `;
+          pager.style.display = "none";
+          return;
+        }
+
+        adminOrdersBox.innerHTML = `<h3 class="sec-title">Orders (${data.totalResults})</h3>`;
+
+        orders.forEach(function (o) {
+          const div = document.createElement("div");
+          div.className = "req-card";
+
+          const itemsText = (o.items || [])
+            .map(function (it) { return it.qty + "× " + it.name; })
+            .join(", ");
+
+          const buyer = o.userId ? (o.userId.name + " • " + o.userId.email) : "Unknown user";
+
+          div.innerHTML = `
+            <div class="req-top">
+              <div>
+                <h4>₹${o.totalAmount}</h4>
+                <p class="muted small">👤 ${buyer}</p>
+                <p class="muted small">🛍️ ${itemsText}</p>
+                <p class="muted small">${new Date(o.createdAt).toLocaleString()}</p>
+              </div>
+
+              <span class="status ${getStatusClass(o.status)}">${o.status}</span>
+            </div>
+
+            <div class="action-row">
+              <select class="status-select" id="status-${o._id}">
+                <option value="Placed" ${o.status === "Placed" ? "selected" : ""}>Placed</option>
+                <option value="Confirmed" ${o.status === "Confirmed" ? "selected" : ""}>Confirmed</option>
+                <option value="Shipped" ${o.status === "Shipped" ? "selected" : ""}>Shipped</option>
+                <option value="Delivered" ${o.status === "Delivered" ? "selected" : ""}>Delivered</option>
+                <option value="Cancelled" ${o.status === "Cancelled" ? "selected" : ""}>Cancelled</option>
+              </select>
+
+              <button class="btn primary" onclick="updateOrderStatus('${o._id}')">Update ✅</button>
+            </div>
+          `;
+
+          adminOrdersBox.appendChild(div);
+        });
+
+        pager.style.display = data.totalPages > 1 ? "flex" : "none";
+        pageInfo.innerText = "Page " + data.page + " of " + data.totalPages;
+        document.getElementById("prevBtn").disabled = data.page <= 1;
+        document.getElementById("nextBtn").disabled = data.page >= data.totalPages;
+
+      } catch (error) {
+        console.log(error);
+        adminOrdersBox.innerHTML = "<p class='muted'>Server error ❌</p>";
+        pager.style.display = "none";
+      }
+    }
+
+    window.updateOrderStatus = async function (id) {
+      const status = document.getElementById("status-" + id).value;
+
+      try {
+        const res = await adminFetch(API + "/api/orders/" + id + "/status", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Update failed ❌");
+          return;
+        }
+
+        alert("Order updated ✅");
+        loadOrders(currentPage);
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    statusFilter.addEventListener("change", function () { loadOrders(1); });
+    document.getElementById("prevBtn").addEventListener("click", function () { loadOrders(currentPage - 1); });
+    document.getElementById("nextBtn").addEventListener("click", function () { loadOrders(currentPage + 1); });
+
+    loadOrders(1);
+  </script>
+
+</body>
+</html>

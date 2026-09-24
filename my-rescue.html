@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - My Rescue Requests</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="my-rescue.css" />
+</head>
+
+<body>
+
+  <main class="page">
+
+    <header class="page-top">
+      <h2>🧾 My Rescue Requests</h2>
+      <p>Track your rescue status updates</p>
+    </header>
+
+    <section class="card" id="rescueBox">
+      <p class="muted">Loading rescue requests...</p>
+    </section>
+
+    <div class="btn-row">
+      <a href="rescue.html" class="btn primary full">+ Create New Rescue Request</a>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navbar -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+
+    const rescueBox = document.getElementById("rescueBox");
+
+    if (!token) {
+      alert("Please login first ❗");
+      window.location.href = "login.html";
+    }
+
+    function getStatusClass(status) {
+      if (!status) return "pending";
+      const s = status.toLowerCase();
+      if (s.includes("rescued")) return "good";
+      if (s.includes("progress")) return "mid";
+      return "pending";
+    }
+
+    async function loadMyRescues() {
+      try {
+        const res = await fetch(API + "/api/rescue/my", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const rescues = await res.json();
+
+        if (!res.ok) {
+          rescueBox.innerHTML = "<p class='muted'>Failed to load rescue requests ❌</p>";
+          return;
+        }
+
+        if (!rescues || rescues.length === 0) {
+          rescueBox.innerHTML = `
+            <h3 class="sec-title">No rescue requests yet</h3>
+            <p class="muted">If you find an animal in danger, report it here ❤️</p>
+          `;
+          return;
+        }
+
+        rescueBox.innerHTML = `<h3 class="sec-title">Your Rescue Requests</h3>`;
+
+        rescues.forEach(function (r) {
+          const div = document.createElement("div");
+          div.className = "req-card";
+
+          div.innerHTML = `
+            <div class="req-top">
+              <div>
+                <h4>${r.animalType} • ${r.condition}</h4>
+                <p class="muted small">📍 ${r.city}, ${r.address}</p>
+              </div>
+
+              <span class="status ${getStatusClass(r.status)}">${r.status}</span>
+            </div>
+
+            ${r.image ? `
+              <div class="req-img">
+                <img src="${r.image}" alt="Rescue Image" />
+              </div>
+            ` : ""}
+
+            ${r.message ? `<p class="msg">📝 ${r.message}</p>` : ""}
+
+            ${r.mapsLink ? `
+              <a class="btn ghost full" href="${r.mapsLink}" target="_blank">
+                📍 Open in Google Maps
+              </a>
+            ` : ""}
+          `;
+
+          rescueBox.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        rescueBox.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    loadMyRescues();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Doctors</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-doctor.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="admin-page">
+
+    <header class="page-top">
+      <h2>🛠 Admin - Manage Doctors</h2>
+      <p>Add, update, and delete doctors available for online appointments</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html">Adoption</a>
+      <a href="admin-rescue.html">Rescue</a>
+      <a href="admin-doctor.html" class="active">Doctors</a>
+      <a href="admin-products.html">Products</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-appointments.html">Appointments</a>
+    </nav>
+    
+
+    <section class="card">
+      <h3 class="sec-title" id="formTitle">➕ Add Doctor</h3>
+
+      <form id="doctorForm" class="form">
+
+        <div class="field">
+          <label>Doctor Name</label>
+          <input type="text" id="name" placeholder="e.g. Dr. Rohan Patel" required />
+        </div>
+
+        <div class="field">
+          <label>Specialization</label>
+          <input type="text" id="specialization" placeholder="e.g. General Veterinary Surgeon" required />
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Experience</label>
+            <input type="text" id="experience" placeholder="e.g. 5+ years" required />
+          </div>
+
+          <div class="field">
+            <label>Fee (₹)</label>
+            <input type="number" id="fee" placeholder="e.g. 499" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Hospital / Clinic Name</label>
+          <input type="text" id="hospital" placeholder="e.g. Animora Vet Care" />
+        </div>
+
+        <div class="field">
+          <label>Available Days (comma separated)</label>
+          <input type="text" id="availableDays" placeholder="Mon, Tue, Wed" required />
+        </div>
+
+        <div class="field">
+          <label>Available Slots (comma separated)</label>
+          <input type="text" id="availableSlots" placeholder="10:00 AM, 12:00 PM, 05:00 PM" required />
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn primary full" id="submitBtn">
+            Add Doctor ✅
+          </button>
+
+          <button type="button" class="btn ghost full" id="cancelBtn" style="display:none;">
+            Cancel Edit
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <section class="card">
+      <h3 class="sec-title">👨‍⚕️ Existing Doctors</h3>
+      <div id="doctorList">
+        <p class="muted">Loading doctors...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item active"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+
+    const form = document.getElementById("doctorForm");
+    const doctorListDiv = document.getElementById("doctorList");
+
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    let editDoctorId = null;
+
+    function toArray(text) {
+      return text
+        .split(",")
+        .map(function (x) { return x.trim(); })
+        .filter(function (x) { return x.length > 0; });
+    }
+
+    function fillForm(doc) {
+      document.getElementById("name").value = doc.name || "";
+      document.getElementById("specialization").value = doc.specialization || "";
+      document.getElementById("experience").value = doc.experience || "";
+      document.getElementById("fee").value = doc.fee || "";
+      document.getElementById("hospital").value = doc.hospital || "";
+      document.getElementById("availableDays").value = (doc.availableDays || []).join(", ");
+      document.getElementById("availableSlots").value = (doc.availableSlots || []).join(", ");
+    }
+
+    function resetFormMode() {
+      editDoctorId = null;
+      form.reset();
+      formTitle.innerText = "➕ Add Doctor";
+      submitBtn.innerText = "Add Doctor ✅";
+      cancelBtn.style.display = "none";
+    }
+
+    async function loadDoctors() {
+      try {
+        const res = await fetch(API + "/api/doctors");
+        const doctors = await res.json();
+
+        if (!res.ok) {
+          doctorListDiv.innerHTML = "<p class='muted'>Failed to load doctors ❌</p>";
+          return;
+        }
+
+        if (!doctors || doctors.length === 0) {
+          doctorListDiv.innerHTML = "<p class='muted'>No doctors added yet.</p>";
+          return;
+        }
+
+        doctorListDiv.innerHTML = "";
+
+        doctors.forEach(function (doc) {
+          const div = document.createElement("div");
+          div.className = "doc-row";
+
+          div.innerHTML = `
+            <div class="doc-row-top">
+              <div>
+                <h4>${doc.name}</h4>
+                <p class="muted">${doc.specialization} • ₹${doc.fee} • ${doc.experience}</p>
+                <p class="muted small">Days: ${(doc.availableDays || []).join(", ")}</p>
+                <p class="muted small">Slots: ${(doc.availableSlots || []).join(", ")}</p>
+                <p class="muted small">Hospital: ${doc.hospital || "-"}</p>
+              </div>
+
+              <div class="action-col">
+                <button class="btn tiny ghost" onclick='startEdit(${JSON.stringify(doc)})'>Edit</button>
+                <button class="btn tiny danger" onclick="deleteDoctor('${doc._id}')">Delete</button>
+              </div>
+            </div>
+          `;
+
+          doctorListDiv.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        doctorListDiv.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    window.startEdit = function (doc) {
+      editDoctorId = doc._id;
+      fillForm(doc);
+
+      formTitle.innerText = "✏️ Edit Doctor";
+      submitBtn.innerText = "Save Changes ✅";
+      cancelBtn.style.display = "inline-flex";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.deleteDoctor = async function (id) {
+      const ok = confirm("Delete this doctor? ❗");
+      if (!ok) return;
+
+      try {
+        const res = await adminFetch(API + "/api/doctors/" + id, {
+          method: "DELETE"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Delete failed ❌");
+          return;
+        }
+
+        alert("Doctor deleted ✅");
+        resetFormMode();
+        loadDoctors();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    cancelBtn.addEventListener("click", function () {
+      resetFormMode();
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const specialization = document.getElementById("specialization").value.trim();
+      const experience = document.getElementById("experience").value.trim();
+      const fee = document.getElementById("fee").value;
+      const hospital = document.getElementById("hospital").value.trim();
+
+      const availableDays = toArray(document.getElementById("availableDays").value);
+      const availableSlots = toArray(document.getElementById("availableSlots").value);
+
+      try {
+        const payload = {
+          name,
+          specialization,
+          experience,
+          fee,
+          hospital,
+          availableDays,
+          availableSlots
+        };
+
+        let url = API + "/api/doctors/add";
+        let method = "POST";
+
+        if (editDoctorId) {
+          url = API + "/api/doctors/" + editDoctorId;
+          method = "PUT";
+        }
+
+        const res = await adminFetch(url, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Action failed ❌");
+          return;
+        }
+
+        alert(editDoctorId ? "Doctor updated ✅" : "Doctor added ✅");
+        resetFormMode();
+        loadDoctors();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    loadDoctors();
+  </script>
+
+</body>
+</html>

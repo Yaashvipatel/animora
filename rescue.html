@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Rescue</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="rescue.css" />
+</head>
+
+<body>
+
+  <main class="rescue-page">
+
+    <header class="page-top">
+      <h2>🚨 Rescue Request</h2>
+      <p>Report animals in danger. We will connect you to help ❤️</p>
+    </header>
+
+    <section class="card">
+      <h3 class="sec-title">Fill Rescue Details</h3>
+
+      <form id="rescueForm" class="form">
+
+        <div class="two-col">
+          <div class="field">
+            <label>Animal Type *</label>
+            <select id="animalType" required>
+              <option value="">Select</option>
+              <option>Dog</option>
+              <option>Cat</option>
+              <option>Bird</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Condition *</label>
+            <select id="condition" required>
+              <option value="">Select</option>
+              <option>Injured</option>
+              <option>Trapped</option>
+              <option>Sick</option>
+              <option>Abandoned</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Image URL (optional)</label>
+          <input id="image" placeholder="https://image-link..." />
+        </div>
+
+        <div class="field">
+          <label>Message (optional)</label>
+          <textarea id="message" placeholder="Explain the situation..."></textarea>
+        </div>
+
+        <!-- ✅ Location tools -->
+        <section class="location-box">
+          <div class="location-top">
+            <h4>📍 Location</h4>
+            <button type="button" class="btn ghost small" onclick="useCurrentLocation()">
+              Use Current Location
+            </button>
+          </div>
+
+          <p class="muted small">
+            This will create a Google Maps link automatically. You can share it with rescuers ✅
+          </p>
+
+          <div class="two-col">
+            <div class="field">
+              <label>City *</label>
+              <input id="city" placeholder="Enter city" required />
+            </div>
+
+            <div class="field">
+              <label>Address / Landmark *</label>
+              <input id="address" placeholder="Exact location / landmark" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Google Maps Link (auto)</label>
+            <input id="mapsLink" placeholder="Will be generated..." readonly />
+          </div>
+        </section>
+
+        <button class="btn primary full" type="submit">
+          Submit Rescue Request ✅
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+    const form = document.getElementById("rescueForm");
+
+    if (!token) {
+      alert("Please login first ❗");
+      window.location.href = "login.html";
+    }
+
+    // ✅ Get live location & build google maps link
+    function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert("Geolocation not supported in this browser ❌");
+        return;
+      }
+
+      alert("Getting your location... 📍");
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          const link = `https://www.google.com/maps?q=${lat},${lng}`;
+
+          document.getElementById("mapsLink").value = link;
+
+          // ✅ Small helpful autofill into address field
+          document.getElementById("address").value = `Near my location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+
+          alert("Location captured ✅ Google Maps link generated!");
+        },
+        function (error) {
+          console.log(error);
+          alert("Location permission denied or error occurred ❌");
+        }
+      );
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const payload = {
+        animalType: document.getElementById("animalType").value,
+        condition: document.getElementById("condition").value,
+        image: document.getElementById("image").value.trim(),
+        message: document.getElementById("message").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        address: document.getElementById("address").value.trim(),
+
+        // ✅ extra useful info
+        mapsLink: document.getElementById("mapsLink").value.trim()
+      };
+
+      try {
+        const res = await fetch(API + "/api/rescue/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Rescue request failed ❌");
+          return;
+        }
+
+        alert("Rescue request submitted ✅");
+        form.reset();
+        window.location.href = "my-rescue.html";
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+  </script>
+
+</body>
+</html>

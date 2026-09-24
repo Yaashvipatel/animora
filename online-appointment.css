@@ -1,0 +1,259 @@
+/* ✅ Fix overflow everywhere */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Page */
+.app-page {
+  width: 92%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 95px;
+}
+
+/* Top Header */
+.page-top {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.page-top h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #111;
+}
+
+.page-top p {
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0px 10px 26px rgba(0, 0, 0, 0.08);
+  margin-top: 14px;
+  overflow: hidden; /* ✅ prevents inputs breaking card */
+}
+
+.sec-title {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #111;
+}
+
+.muted {
+  color: #666;
+  font-size: 13px;
+  margin: 0;
+}
+
+.muted.small {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Doctor List */
+.doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-card {
+  background: #f6f7fb;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.doc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.doc-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.doctor-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #111;
+}
+
+.doc-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  background: white;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+  border: 1px solid #e5e7eb;
+}
+
+/* Selected Doctor */
+.selected-doctor {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.doc-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.doc-info {
+  width: 100%;
+}
+
+.doc-info h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #111;
+}
+
+/* ✅ Booking Form */
+.form {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  width: 100%;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #111;
+  font-weight: 800;
+}
+
+/* ✅ Inputs must never overflow */
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  max-width: 100%;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+  display: block;
+}
+
+.field textarea {
+  min-height: 90px;
+  resize: none;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: #2563eb;
+  box-shadow: 0px 0px 0px 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ✅ 2 column layout */
+.two-col {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn.primary:hover {
+  opacity: 0.92;
+}
+
+.btn.full {
+  width: 100%;
+}
+
+.btn.choose {
+  background: #2563eb;
+  color: white;
+  flex-shrink: 0;
+}
+
+.btn.choose:hover {
+  opacity: 0.92;
+}
+
+/* ✅ Mobile Fix */
+@media (max-width: 520px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn.choose {
+    width: 100%;
+  }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - My Orders</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="orders.css" />
+</head>
+
+<body>
+
+  <main class="orders-page">
+
+    <header class="page-top">
+      <h2>📦 My Orders</h2>
+      <p>Your placed orders will appear here</p>
+    </header>
+
+    <section class="card" id="ordersBox">
+      <p class="muted">Loading orders...</p>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+    const ordersBox = document.getElementById("ordersBox");
+
+    if (!token) {
+      alert("Please login first ❗");
+      window.location.href = "login.html";
+    }
+
+    async function loadOrders() {
+      try {
+        const res = await fetch(API + "/api/orders/my", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const orders = await res.json();
+
+        if (!res.ok) {
+          ordersBox.innerHTML = "<p class='muted'>Failed to load orders ❌</p>";
+          return;
+        }
+
+        if (!orders || orders.length === 0) {
+          ordersBox.innerHTML = `
+            <h3 class="sec-title">No orders yet</h3>
+            <p class="muted">Start shopping in Animora 🛒</p>
+            <a href="shopping.html" class="btn primary full">Go to Shopping</a>
+          `;
+          return;
+        }
+
+        ordersBox.innerHTML = `<h3 class="sec-title">Your Orders</h3>`;
+
+        orders.forEach(function (o) {
+          const div = document.createElement("div");
+          div.className = "order-card";
+
+          let itemsHtml = "";
+          o.items.forEach(function (it) {
+            itemsHtml += `
+              <div class="order-item">
+                <span>${it.name} × ${it.qty}</span>
+                <b>₹${it.price * it.qty}</b>
+              </div>
+            `;
+          });
+
+          div.innerHTML = `
+            <div class="order-top">
+              <div>
+                <h4>Order ID: ${o._id.slice(-6)}</h4>
+                <p class="muted small">Status: ${o.status}</p>
+              </div>
+              <span class="pill">₹${o.totalAmount}</span>
+            </div>
+
+            <div class="items-box">
+              ${itemsHtml}
+            </div>
+          `;
+
+          ordersBox.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        ordersBox.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    loadOrders();
+  </script>
+
+</body>
+</html>

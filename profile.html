@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Profile</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="profile.css" />
+</head>
+
+<body>
+
+  <main class="page">
+
+    <!-- Header -->
+    <header class="profile-header">
+      <div class="avatar">🐾</div>
+      <div class="header-text">
+        <h1>Profile</h1>
+        <p>Manage your personal details</p>
+      </div>
+    </header>
+
+    <!-- Main Card -->
+    <section class="card" id="profileBox">
+      <p class="loading">Loading profile...</p>
+    </section>
+
+  </main>
+
+  <!-- ✅ Popup modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+
+      <div class="modal-top">
+        <div>
+          <h2>Complete Your Profile</h2>
+          <p>It takes less than 30 seconds ✅</p>
+        </div>
+
+        <button class="modal-close" type="button" onclick="closeModal()">
+          ✕
+        </button>
+      </div>
+
+      <form id="completeProfileForm" class="form-grid">
+
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="text" id="phone" placeholder="e.g. 9876543210" required />
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <input type="text" id="address" placeholder="Flat / Street / Area" required />
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>City</label>
+            <input type="text" id="city" placeholder="City" required />
+          </div>
+
+          <div class="field">
+            <label>State</label>
+            <input type="text" id="state" placeholder="State" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Do you have a pet?</label>
+          <select id="hasPet" required>
+            <option value="">Select</option>
+            <option value="Yes">Yes 🐶</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn ghost full" onclick="fillLater()">
+            Fill Later
+          </button>
+
+          <button type="submit" class="btn primary full">
+            Save Details
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item active"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const profileBox = document.getElementById("profileBox");
+    const token = localStorage.getItem("token");
+
+    const modalBg = document.getElementById("modalBg");
+    const completeForm = document.getElementById("completeProfileForm");
+
+    let currentUserData = null;
+
+    function closeModal() {
+      modalBg.style.display = "none";
+    }
+
+    function fillLater() {
+      sessionStorage.setItem("hideProfilePopup", "true");
+      modalBg.style.display = "none";
+    }
+
+    function openProfileModal() {
+      if (!currentUserData) return;
+
+      document.getElementById("phone").value = currentUserData.phone || "";
+      document.getElementById("address").value = currentUserData.address || "";
+      document.getElementById("city").value = currentUserData.city || "";
+      document.getElementById("state").value = currentUserData.state || "";
+      document.getElementById("hasPet").value = currentUserData.hasPet || "";
+
+      modalBg.style.display = "flex";
+      sessionStorage.removeItem("hideProfilePopup");
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      alert("Logged out ✅");
+      window.location.href = "profile.html";
+    }
+
+    function renderLoggedOut() {
+      profileBox.innerHTML = `
+        <div class="center">
+          <h2 class="title">User Profile</h2>
+          <p class="muted">Login or signup to access your Animora profile.</p>
+
+          <div class="btn-row">
+            <a href="login.html" class="btn primary">Login</a>
+            <a href="signup.html" class="btn ghost">Signup</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProfile(user) {
+      const profileBtnText = user.isProfileComplete ? "Edit Profile" : "Complete Profile";
+      const profileMsg = user.isProfileComplete
+        ? "Your profile is complete ✅"
+        : "Your profile is incomplete. Please complete it.";
+
+      profileBox.innerHTML = `
+        <div class="profile-card-top">
+          <div class="mini-avatar">👤</div>
+          <div>
+            <h2 class="title">${user.name}</h2>
+            <p class="muted">${user.email}</p>
+          </div>
+        </div>
+
+        <div class="status-box ${user.isProfileComplete ? "good" : "warn"}">
+          <p class="status-title">${profileMsg}</p>
+          <button class="btn primary" onclick="openProfileModal()">${profileBtnText}</button>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <p class="label">Phone</p>
+            <p class="value">${user.phone || "-"}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">Has Pet</p>
+            <p class="value">${user.hasPet || "-"}</p>
+          </div>
+
+          <div class="info-item full">
+            <p class="label">Address</p>
+            <p class="value">${user.address || "-"}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">City</p>
+            <p class="value">${user.city || "-"}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">State</p>
+            <p class="value">${user.state || "-"}</p>
+          </div>
+        </div>
+
+        <div class="btn-row end">
+          <button class="btn danger" onclick="logout()">Logout</button>
+        </div>
+      `;
+    }
+
+    async function loadProfile() {
+      if (!token) {
+        renderLoggedOut();
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:8000/api/users/me", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        const user = await res.json();
+
+        if (!res.ok) {
+          alert(user.message || "Error loading profile ❌");
+          renderLoggedOut();
+          return;
+        }
+
+        currentUserData = user;
+        renderProfile(user);
+
+        const hidePopup = sessionStorage.getItem("hideProfilePopup");
+
+        if (user.isProfileComplete === false && hidePopup !== "true") {
+          modalBg.style.display = "flex";
+        } else {
+          modalBg.style.display = "none";
+        }
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+        renderLoggedOut();
+      }
+    }
+
+    completeForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const city = document.getElementById("city").value.trim();
+      const state = document.getElementById("state").value.trim();
+      const hasPet = document.getElementById("hasPet").value;
+
+      try {
+        const res = await fetch("http://localhost:8000/api/users/complete-profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ phone, address, city, state, hasPet })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Profile update failed ❌");
+          return;
+        }
+
+        alert("Profile updated ✅");
+        modalBg.style.display = "none";
+        loadProfile();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    loadProfile();
+  </script>
+
+</body>
+</html>

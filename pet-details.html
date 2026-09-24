@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Pet Details</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="pet-details.css" />
+</head>
+
+<body>
+
+  <main class="details-page">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="back-btn" onclick="goBack()">← Back</button>
+      <h2>🐾 Pet Details</h2>
+    </header>
+
+    <!-- Pet Details Card -->
+    <section class="pet-card" id="petBox">
+      <p class="muted">Loading pet details...</p>
+    </section>
+
+    <!-- Adoption Action -->
+    <section class="card">
+      <h3 class="sec-title">Adoption Request</h3>
+      <p class="muted">
+        If you love this pet, send an adoption request. The shelter will contact you soon ✅
+      </p>
+
+      <button class="btn primary full" id="adoptBtn">
+        Send Adoption Request ✅
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const petBox = document.getElementById("petBox");
+    const adoptBtn = document.getElementById("adoptBtn");
+
+    const token = localStorage.getItem("token");
+    const selectedPet = JSON.parse(localStorage.getItem("selectedPet"));
+
+    function goBack() {
+      window.location.href = "adoption.html";
+    }
+
+    // ✅ If no pet selected
+    if (!selectedPet) {
+      alert("No pet selected ❌");
+      window.location.href = "adoption.html";
+    }
+
+    // ✅ Render pet details
+    function renderPet(p) {
+      petBox.innerHTML = `
+        <div class="pet-top">
+          <div class="pet-img">
+            ${p.image ? `<img src="${p.image}" alt="${p.name}" />` : "🐶"}
+          </div>
+
+          <div class="pet-basic">
+            <h2>${p.name}</h2>
+            <p class="muted">${p.type} • ${p.age} • ${p.gender}</p>
+
+            <div class="tags">
+              ${p.vaccinated ? `<span class="tag good">Vaccinated</span>` : ""}
+              ${p.neutered ? `<span class="tag ok">Neutered</span>` : ""}
+              ${p.nature ? `<span class="tag">${p.nature}</span>` : ""}
+            </div>
+
+            <p class="muted small" style="margin-top:10px;">
+              📍 ${p.centreName}, ${p.city}
+            </p>
+          </div>
+        </div>
+
+        <div class="info-grid">
+
+          <div class="info-item">
+            <p class="label">Centre</p>
+            <p class="value">${p.centreName}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">City</p>
+            <p class="value">${p.city}</p>
+          </div>
+
+          <div class="info-item full">
+            <p class="label">Address</p>
+            <p class="value">${p.centreAddress}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">Contact</p>
+            <p class="value">${p.contactPhone}</p>
+          </div>
+
+          <div class="info-item">
+            <p class="label">Adoption Fee</p>
+            <p class="value">${p.adoptionFee && p.adoptionFee > 0 ? "₹" + p.adoptionFee : "Free ✅"}</p>
+          </div>
+
+          <div class="info-item full">
+            <p class="label">About</p>
+            <p class="value">${p.description || "No description available."}</p>
+          </div>
+
+        </div>
+      `;
+    }
+
+    renderPet(selectedPet);
+
+    // ✅ Adoption Request API call
+    adoptBtn.addEventListener("click", async function () {
+      if (!token) {
+        alert("Please login first ❗");
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const res = await fetch(API + "/api/adoption/request/" + selectedPet._id, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Request failed ❌");
+          return;
+        }
+
+        alert("Adoption request sent ✅");
+        window.location.href = "menu.html";
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+  </script>
+
+</body>
+</html>

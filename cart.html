@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Cart</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="cart.css" />
+</head>
+
+<body>
+
+  <main class="cart-page">
+
+    <header class="cart-top">
+      <div>
+        <h2>🧺 Your Cart</h2>
+        <p>Review your items before checkout</p>
+      </div>
+
+      <a href="shopping.html" class="back-btn">← Shop</a>
+    </header>
+
+    <section class="card" id="cartItemsBox">
+      <p class="muted">Loading cart...</p>
+    </section>
+
+    <section class="card" id="summaryBox">
+      <h3 class="sec-title">Order Summary</h3>
+
+      <div class="summary-row">
+        <span>Total Items</span>
+        <b id="totalItems">0</b>
+      </div>
+
+      <div class="summary-row">
+        <span>Total Amount</span>
+        <b>₹<span id="totalAmount">0</span></b>
+      </div>
+
+      <button class="btn primary full" id="checkoutBtn">
+        Place Order ✅
+      </button>
+
+      <button class="btn ghost full" id="clearBtn">
+        Clear Cart 🗑️
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item active"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+
+    const cartItemsBox = document.getElementById("cartItemsBox");
+    const totalItemsEl = document.getElementById("totalItems");
+    const totalAmountEl = document.getElementById("totalAmount");
+
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem("cart")) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+
+    function calcTotals(cart) {
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      return { totalItems, totalAmount };
+    }
+
+    function renderCart() {
+  const cart = getCart();
+
+  // ✅ Empty Cart UI
+  if (!cart || cart.length === 0) {
+    cartItemsBox.innerHTML = `
+      <div class="empty-box">
+        <h3 class="sec-title">Cart is empty</h3>
+        <p class="muted">Add products from shop ✅</p>
+        <a href="shopping.html" class="btn primary full">Go to Shopping</a>
+      </div>
+    `;
+
+    totalItemsEl.innerText = "0";
+    totalAmountEl.innerText = "0";
+
+    checkoutBtn.disabled = true;
+    clearBtn.disabled = true;
+
+    checkoutBtn.style.opacity = "0.5";
+    clearBtn.style.opacity = "0.5";
+
+    return;
+  }
+
+  // ✅ If cart has items
+  checkoutBtn.disabled = false;
+  clearBtn.disabled = false;
+
+  checkoutBtn.style.opacity = "1";
+  clearBtn.style.opacity = "1";
+
+  cartItemsBox.innerHTML = `<h3 class="sec-title">Cart Items</h3>`;
+
+  cart.forEach(function (item, index) {
+    const div = document.createElement("div");
+    div.className = "cart-item";
+
+    div.innerHTML = `
+      <div class="item-left">
+        <div class="item-img">
+          ${item.image ? `<img src="${item.image}" alt="${item.name}" />` : "🐾"}
+        </div>
+
+        <div class="item-info">
+          <h4>${item.name}</h4>
+          <p class="muted small">${item.category}</p>
+          <p class="price">₹${item.price}</p>
+        </div>
+      </div>
+
+      <div class="qty-box">
+        <button class="qty-btn" onclick="decreaseQty(${index})">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="increaseQty(${index})">+</button>
+      </div>
+    `;
+
+    cartItemsBox.appendChild(div);
+  });
+
+  const totals = calcTotals(cart);
+  totalItemsEl.innerText = totals.totalItems;
+  totalAmountEl.innerText = totals.totalAmount;
+}
+
+
+    // ✅ qty handlers
+    window.increaseQty = function (index) {
+      const cart = getCart();
+      cart[index].qty += 1;
+      saveCart(cart);
+      renderCart();
+    };
+
+    window.decreaseQty = function (index) {
+      const cart = getCart();
+
+      if (cart[index].qty > 1) {
+        cart[index].qty -= 1;
+      } else {
+        cart.splice(index, 1);
+      }
+
+      saveCart(cart);
+      renderCart();
+    };
+
+    clearBtn.addEventListener("click", function () {
+      const ok = confirm("Clear your entire cart? ❗");
+      if (!ok) return;
+      localStorage.removeItem("cart");
+      renderCart();
+    });
+
+    checkoutBtn.addEventListener("click", async function () {
+      if (!token) {
+        alert("Please login first to place order ❗");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const cart = getCart();
+      const totals = calcTotals(cart);
+
+      // ✅ Order payload format for backend
+      const items = cart.map(function (i) {
+        return {
+          productId: i._id,
+          name: i.name,
+          price: i.price,
+          qty: i.qty
+        };
+      });
+
+      try {
+        const res = await fetch(API + "/api/orders/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            items: items,
+            totalAmount: totals.totalAmount
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Order failed ❌");
+          return;
+        }
+
+        alert("Order placed ✅");
+        localStorage.removeItem("cart");
+        window.location.href = "shopping.html";
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    renderCart();
+  </script>
+
+</body>
+</html>

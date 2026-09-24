@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - My Bookings</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="bookings.css" />
+</head>
+
+<body>
+
+  <main class="bookings-page">
+
+    <header class="page-top">
+      <h2>📌 My Bookings</h2>
+      <p>Your vet appointments will appear here</p>
+    </header>
+
+    <section class="card" id="bookingList">
+      <p class="muted">Loading bookings...</p>
+    </section>
+
+    <a href="online-appointment.html" class="fab">
+      ➕ Book New
+    </a>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+    const bookingList = document.getElementById("bookingList");
+
+    if (!token) {
+      alert("Please login first ❗");
+      window.location.href = "login.html";
+    }
+
+    async function loadBookings() {
+      try {
+        const res = await fetch(API + "/api/appointments/my", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        const bookings = await res.json();
+
+        if (!res.ok) {
+          bookingList.innerHTML = "<p class='muted'>Failed to load bookings ❌</p>";
+          return;
+        }
+
+        if (!bookings || bookings.length === 0) {
+          bookingList.innerHTML = `
+            <h3 class="sec-title">No bookings yet</h3>
+            <p class="muted">Book your first online appointment ✅</p>
+            <a href="online-appointment.html" class="btn primary full">Book Appointment</a>
+          `;
+          return;
+        }
+
+        bookingList.innerHTML = `<h3 class="sec-title">Your Appointments</h3>`;
+
+        bookings.forEach(function (b) {
+          const doctorName = b.doctorId?.name || "Doctor";
+          const spec = b.doctorId?.specialization || "-";
+
+          const div = document.createElement("div");
+          div.className = "booking-card";
+
+          div.innerHTML = `
+            <div class="booking-top">
+              <div class="booking-left">
+                <div class="icon-box">🩺</div>
+                <div>
+                  <h4>${doctorName}</h4>
+                  <p class="muted">${spec}</p>
+                </div>
+              </div>
+              <span class="status">${b.status}</span>
+            </div>
+
+            <div class="booking-info">
+              <p><b>Pet:</b> ${b.petName}</p>
+              <p><b>Date:</b> ${b.appointmentDate}</p>
+              <p><b>Time:</b> ${b.appointmentTime}</p>
+              <p><b>Mode:</b> ${b.mode}</p>
+              <p><b>Fee:</b> ₹${b.fee}</p>
+            </div>
+          `;
+
+          bookingList.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        bookingList.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    loadBookings();
+  </script>
+
+</body>
+</html>

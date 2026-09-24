@@ -1,0 +1,334 @@
+/* ✅ Fix overflow & overlapping everywhere */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Page Layout */
+.page {
+  width: 92%;
+  max-width: 650px;
+  margin: 0 auto;
+  padding-bottom: 95px;
+}
+
+/* Header */
+.profile-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0px 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 22px;
+  color: #111;
+}
+
+.header-text p {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Main Card */
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0px 10px 26px rgba(0, 0, 0, 0.08);
+  overflow: hidden; /* ✅ prevents breaking */
+}
+
+/* Helpers */
+.title {
+  margin: 0;
+  font-size: 18px;
+  color: #111;
+}
+
+.muted {
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.loading {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.center {
+  text-align: center;
+  padding: 10px 4px;
+}
+
+/* Profile Top */
+.profile-card-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.mini-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #f3f6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* ✅ Profile status box */
+.status-box {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-box.warn {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.status-box.good {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.status-title {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 700;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.info-item {
+  background: #f6f7fb;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.info-item.full {
+  grid-column: 1 / -1;
+}
+
+.label {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+}
+
+.value {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+  color: #111;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* Buttons */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-row.end {
+  justify-content: flex-end;
+}
+
+.btn {
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn.primary:hover {
+  opacity: 0.92;
+}
+
+.btn.ghost {
+  background: #eef2ff;
+  color: #2563eb;
+}
+
+.btn.danger {
+  background: #ff4d4d;
+  color: white;
+}
+
+.btn.full {
+  width: 100%;
+}
+
+/* ✅ Modal Background */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+}
+
+/* ✅ Modal Box */
+.modal {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0px 30px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* ✅ Modal Header */
+.modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.modal-top h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.modal-top p {
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Close Button */
+.modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.modal-close:hover {
+  opacity: 0.9;
+}
+
+/* ✅ Form layout */
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  width: 100%;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  max-width: 100%;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+  display: block;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #2563eb;
+  box-shadow: 0px 0px 0px 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ✅ City/State aligned properly */
+.two-col {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ✅ Action buttons */
+.modal-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Mobile Fix */
+@media (max-width: 520px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+  

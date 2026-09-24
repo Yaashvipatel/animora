@@ -1,0 +1,138 @@
+.home-container {
+  width: 90%;
+  max-width: 700px;
+  text-align: center;
+  margin-bottom: 90px; /* space for bottom navbar */
+}
+
+/* Logo Circle */
+.logo-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+  margin: 0 auto 15px auto;
+
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.home-header h1 {
+  margin: 0;
+  font-size: 48px;
+  color: #222;
+}
+
+.home-header p {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #555;
+}
+
+/* Search Bar */
+.search-box {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.search-box input {
+  width: 70%;
+  max-width: 450px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: #007bff;
+}
+
+.search-box button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.search-box button:hover {
+  opacity: 0.9;
+}
+
+/* Action Cards */
+.home-actions {
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+.action-card {
+  text-decoration: none;
+  background-color: white;
+  padding: 18px;
+  border-radius: 16px;
+  text-align: left;
+
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.12);
+  transition: 0.2s;
+
+  color: #222;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+}
+
+.action-card h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.action-card p {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Banner */
+.home-banner {
+  margin-top: 20px;
+  background-color: white;
+  padding: 18px;
+  border-radius: 16px;
+
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.12);
+  text-align: left;
+}
+
+.home-banner h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #222;
+}
+
+.home-banner p {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Responsive (desktop) */
+@media (min-width: 700px) {
+  .home-actions {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

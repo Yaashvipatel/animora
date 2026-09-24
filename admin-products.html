@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Admin Products</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin-products.css" />
+  <link rel="stylesheet" href="admin-shared.css" />
+</head>
+
+<body>
+
+  <main class="admin-page">
+
+    <header class="page-top">
+      <h2>🛠 Admin - Manage Products</h2>
+      <p>Add, update, and delete shopping products</p>
+    </header>
+
+    <nav class="admin-subnav">
+      <a href="admin-adoption.html">Adoption</a>
+      <a href="admin-rescue.html">Rescue</a>
+      <a href="admin-doctor.html">Doctors</a>
+      <a href="admin-products.html" class="active">Products</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-appointments.html">Appointments</a>
+    </nav>
+    
+
+    <!-- Form -->
+    <section class="card">
+      <h3 class="sec-title" id="formTitle">➕ Add Product</h3>
+
+      <form id="productForm" class="form">
+
+        <div class="field">
+          <label>Product Name</label>
+          <input type="text" id="name" placeholder="e.g. Dog Food Pack" required />
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Category</label>
+            <input type="text" id="category" placeholder="e.g. Food / Toys / Accessories" required />
+          </div>
+
+          <div class="field">
+            <label>Price (₹)</label>
+            <input type="number" id="price" placeholder="e.g. 499" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Image URL (optional)</label>
+          <input type="text" id="image" placeholder="https://..." />
+        </div>
+
+        <div class="field">
+          <label>Description (optional)</label>
+          <input type="text" id="description" placeholder="Short product description..." />
+        </div>
+
+        <div class="field check-row">
+          <input type="checkbox" id="inStock" checked />
+          <label for="inStock">In Stock ✅</label>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn primary full" id="submitBtn">Add Product ✅</button>
+          <button type="button" class="btn ghost full" id="cancelBtn" style="display:none;">Cancel Edit</button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- Product List -->
+    <section class="card">
+      <h3 class="sec-title">🛒 Existing Products</h3>
+      <div id="productList">
+        <p class="muted">Loading products...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item active"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+
+    const form = document.getElementById("productForm");
+    const productListDiv = document.getElementById("productList");
+
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    let editProductId = null;
+
+    function fillForm(p) {
+      document.getElementById("name").value = p.name || "";
+      document.getElementById("category").value = p.category || "";
+      document.getElementById("price").value = p.price || "";
+      document.getElementById("image").value = p.image || "";
+      document.getElementById("description").value = p.description || "";
+      document.getElementById("inStock").checked = p.inStock !== false;
+    }
+
+    function resetFormMode() {
+      editProductId = null;
+      form.reset();
+      document.getElementById("inStock").checked = true;
+
+      formTitle.innerText = "➕ Add Product";
+      submitBtn.innerText = "Add Product ✅";
+      cancelBtn.style.display = "none";
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch(API + "/api/products?limit=100");
+        const data = await res.json();
+
+        if (!res.ok) {
+          productListDiv.innerHTML = "<p class='muted'>Failed to load products ❌</p>";
+          return;
+        }
+
+        const products = data.products || [];
+
+        if (!products || products.length === 0) {
+          productListDiv.innerHTML = "<p class='muted'>No products added yet.</p>";
+          return;
+        }
+
+        productListDiv.innerHTML = "";
+
+        products.forEach(function (p) {
+          const div = document.createElement("div");
+          div.className = "product-row";
+
+          div.innerHTML = `
+            <div class="row-top">
+              <div class="row-left">
+                <div class="thumb">
+                  ${p.image ? `<img src="${p.image}" alt="${p.name}" />` : "🐾"}
+                </div>
+
+                <div>
+                  <h4>${p.name}</h4>
+                  <p class="muted">${p.category} • ₹${p.price}</p>
+                  <p class="muted small">${p.description || ""}</p>
+                  <p class="stock ${p.inStock ? "yes" : "no"}">
+                    ${p.inStock ? "In Stock ✅" : "Out of Stock ❌"}
+                  </p>
+                </div>
+              </div>
+
+              <div class="action-col">
+                <button class="btn tiny ghost" onclick='startEdit(${JSON.stringify(p)})'>Edit</button>
+                <button class="btn tiny danger" onclick="deleteProduct('${p._id}')">Delete</button>
+              </div>
+            </div>
+          `;
+
+          productListDiv.appendChild(div);
+        });
+
+      } catch (error) {
+        console.log(error);
+        productListDiv.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    window.startEdit = function (p) {
+      editProductId = p._id;
+      fillForm(p);
+
+      formTitle.innerText = "✏️ Edit Product";
+      submitBtn.innerText = "Save Changes ✅";
+      cancelBtn.style.display = "inline-flex";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.deleteProduct = async function (id) {
+      const ok = confirm("Delete this product? ❗");
+      if (!ok) return;
+
+      try {
+        const res = await adminFetch(API + "/api/products/" + id, { method: "DELETE" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Delete failed ❌");
+          return;
+        }
+
+        alert("Product deleted ✅");
+        resetFormMode();
+        loadProducts();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    };
+
+    cancelBtn.addEventListener("click", function () {
+      resetFormMode();
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const category = document.getElementById("category").value.trim();
+      const price = document.getElementById("price").value;
+      const image = document.getElementById("image").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const inStock = document.getElementById("inStock").checked;
+
+      try {
+        const payload = { name, category, price, image, description, inStock };
+
+        let url = API + "/api/products/add";
+        let method = "POST";
+
+        if (editProductId) {
+          url = API + "/api/products/" + editProductId;
+          method = "PUT";
+        }
+
+        const res = await adminFetch(url, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Action failed ❌");
+          return;
+        }
+
+        alert(editProductId ? "Product updated ✅" : "Product added ✅");
+        resetFormMode();
+        loadProducts();
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    loadProducts();
+  </script>
+
+</body>
+</html>

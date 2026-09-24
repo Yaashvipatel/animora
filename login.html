@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Login</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+
+<body>
+
+  <div class="auth-container">
+    <h2>Login</h2>
+    <p>Welcome back to Animora 🐾</p>
+
+    <form class="auth-form" id="loginForm">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="Enter your email" required />
+
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password" required />
+
+      <button type="submit" class="auth-btn">Login</button>
+    </form>
+
+    <p class="switch-text">
+      Don't have an account?
+      <a href="signup.html">Signup</a>
+    </p>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("http://localhost:8000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Login failed ❌");
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        alert("Login successful ✅");
+
+        window.location.href = data.user.role === "admin" ? "admin-adoption.html" : "profile.html";
+      } catch (err) {
+        console.log(err);
+        alert("Server error ❌");
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animora - Online Appointment</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="online-appointment.css" />
+</head>
+
+<body>
+
+  <main class="app-page">
+
+    <header class="page-top">
+      <h2>📅 Online Appointment</h2>
+      <p>Select a vet & book your appointment</p>
+    </header>
+
+    <!-- ✅ Doctor List -->
+    <section class="card">
+      <h3 class="sec-title">Available Doctors</h3>
+      <div id="doctorList" class="doctor-list">
+        <p class="muted">Loading doctors...</p>
+      </div>
+    </section>
+
+    <!-- ✅ Selected Doctor Preview -->
+    <section class="card" id="selectedDoctorCard" style="display:none;">
+      <h3 class="sec-title">Selected Doctor</h3>
+
+      <div class="selected-doctor">
+        <div class="doc-badge">🩺</div>
+
+        <div class="doc-info">
+          <h4 id="docName">Doctor Name</h4>
+          <p id="docSpec" class="muted">Specialization</p>
+
+          <div class="doc-meta">
+            <span id="docFee" class="pill">₹0 fee</span>
+            <span id="docExp" class="pill">0 years</span>
+          </div>
+
+          <p class="muted small" id="docSchedule">Days: - | Slots: -</p>
+          <p class="muted small" id="docHospital">Hospital: -</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✅ Booking Form -->
+    <section class="card" id="bookingCard" style="display:none;">
+      <h3 class="sec-title">Book Appointment</h3>
+
+      <form id="appointmentForm" class="form">
+
+        <div class="two-col">
+          <div class="field">
+            <label>Pet Name</label>
+            <input type="text" id="petName" placeholder="e.g. Bruno" required />
+          </div>
+
+          <div class="field">
+            <label>Phone Number</label>
+            <input type="text" id="phone" placeholder="e.g. 9876543210" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Issue / Symptoms</label>
+          <textarea id="issue" placeholder="Describe the problem..." required></textarea>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="appointmentDate" required />
+          </div>
+
+          <div class="field">
+            <label>Time</label>
+            <select id="appointmentTime" required>
+              <option value="">Select slot</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Mode</label>
+          <select id="mode">
+            <option value="Online">Online</option>
+            <option value="Video Call">Video Call</option>
+            <option value="Audio Call">Audio Call</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn primary full">
+          Confirm Booking ✅
+        </button>
+
+      </form>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="menu.html" class="nav-item"><span class="icon">☰</span><span>Menu</span></a>
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="doctor.html" class="nav-item active"><span class="icon">🩺</span><span>Doctor</span></a>
+    <a href="shopping.html" class="nav-item"><span class="icon">🛒</span><span>Shopping</span></a>
+    <a href="profile.html" class="nav-item"><span class="icon">👤</span><span>Profile</span></a>
+  </nav>
+
+  <script>
+    const API = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+
+    const doctorListDiv = document.getElementById("doctorList");
+
+    const selectedDoctorCard = document.getElementById("selectedDoctorCard");
+    const bookingCard = document.getElementById("bookingCard");
+
+    const docName = document.getElementById("docName");
+    const docSpec = document.getElementById("docSpec");
+    const docFee = document.getElementById("docFee");
+    const docExp = document.getElementById("docExp");
+    const docSchedule = document.getElementById("docSchedule");
+    const docHospital = document.getElementById("docHospital");
+
+    const timeSelect = document.getElementById("appointmentTime");
+    const form = document.getElementById("appointmentForm");
+
+    let selectedDoctor = null;
+
+    if (!token) {
+      alert("Please login first to book appointment ❗");
+      window.location.href = "login.html";
+    }
+
+    async function loadDoctors() {
+      try {
+        const res = await fetch(API + "/api/doctors");
+        const doctors = await res.json();
+
+        if (!res.ok) {
+          doctorListDiv.innerHTML = "<p class='muted'>Failed to load doctors ❌</p>";
+          return;
+        }
+
+        if (!doctors || doctors.length === 0) {
+          doctorListDiv.innerHTML = "<p class='muted'>No doctors available right now 🥲</p>";
+          return;
+        }
+
+        doctorListDiv.innerHTML = "";
+
+        doctors.forEach(function (doc) {
+          const card = document.createElement("div");
+          card.className = "doctor-card";
+
+          card.innerHTML = `
+            <div class="doc-left">
+              <div class="doc-icon">🩺</div>
+              <div>
+                <h4>${doc.name}</h4>
+                <p class="muted">${doc.specialization}</p>
+                <div class="doc-meta">
+                  <span class="pill">₹${doc.fee}</span>
+                  <span class="pill">${doc.experience}</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn choose" onclick="selectDoctor('${doc._id}')">
+              Choose
+            </button>
+          `;
+
+          doctorListDiv.appendChild(card);
+        });
+
+      } catch (error) {
+        console.log(error);
+        doctorListDiv.innerHTML = "<p class='muted'>Server error ❌</p>";
+      }
+    }
+
+    async function selectDoctor(doctorId) {
+      try {
+        const res = await fetch(API + "/api/doctors/" + doctorId);
+        const doc = await res.json();
+
+        if (!res.ok) {
+          alert(doc.message || "Doctor not found ❌");
+          return;
+        }
+
+        selectedDoctor = doc;
+
+        // show doctor preview
+        selectedDoctorCard.style.display = "block";
+        bookingCard.style.display = "block";
+
+        docName.innerText = doc.name;
+        docSpec.innerText = doc.specialization;
+        docFee.innerText = "₹" + doc.fee + " fee";
+        docExp.innerText = doc.experience;
+
+        const days = (doc.availableDays || []).join(", ");
+        const slots = (doc.availableSlots || []).join(", ");
+        docSchedule.innerText = "Days: " + (days || "-") + " | Slots: " + (slots || "-");
+        docHospital.innerText = "Hospital: " + (doc.hospital || "-");
+
+        // fill time dropdown based on doctor slots
+        timeSelect.innerHTML = `<option value="">Select slot</option>`;
+        (doc.availableSlots || []).forEach(function (slot) {
+          const opt = document.createElement("option");
+          opt.value = slot;
+          opt.innerText = slot;
+          timeSelect.appendChild(opt);
+        });
+
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      if (!selectedDoctor) {
+        alert("Please choose a doctor first ❗");
+        return;
+      }
+
+      const petName = document.getElementById("petName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const issue = document.getElementById("issue").value.trim();
+      const appointmentDate = document.getElementById("appointmentDate").value;
+      const appointmentTime = document.getElementById("appointmentTime").value;
+      const mode = document.getElementById("mode").value;
+
+      if (!appointmentTime) {
+        alert("Please select a time slot ❗");
+        return;
+      }
+
+      try {
+        const res = await fetch(API + "/api/appointments/book", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            doctorId: selectedDoctor._id,
+            petName: petName,
+            phone: phone,
+            issue: issue,
+            appointmentDate: appointmentDate,
+            appointmentTime: appointmentTime,
+            mode: mode
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Booking failed ❌");
+          return;
+        }
+
+        alert("Appointment booked ✅");
+        form.reset();
+
+        // go to bookings page
+        window.location.href = "bookings.html";
+
+      } catch (error) {
+        console.log(error);
+        alert("Server error ❌");
+      }
+    });
+
+    loadDoctors();
+  </script>
+
+</body>
+</html>
