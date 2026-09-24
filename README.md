@@ -83,10 +83,10 @@ curl -X POST http://localhost:8000/api/seed/doctors
 curl -X POST http://localhost:8000/api/seed/products
 ```
 
-Frontend: serve the project root with any static file server (e.g. VS Code's
-"Live Server", or `npx serve .`) and open `index.html`. It talks to the backend
-at `http://localhost:8000` — update the `API` constant near the top of each
-page's `<script>` if you deploy the backend elsewhere.
+Frontend: serve `animora-frontend/` with any static file server (e.g. VS Code's
+"Live Server", or `npx serve animora-frontend`) and open `index.html`. It talks
+to the backend at `http://localhost:8000` — update the `API` constant near the
+top of each page's `<script>` if you deploy the backend elsewhere.
 
 ## Environment variables
 
